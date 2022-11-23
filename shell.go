@@ -11,7 +11,7 @@ func ExecShell(s string) (out []byte, err error) {
 	var cmd *exec.Cmd
 	switch runtime.GOOS {
 	case "linux", "darwin":
-		cmd = exec.Command("/bin/bash", "-c", s)
+		cmd = exec.Command("/bin/sh", "-c", s)
 		out, err = cmd.CombinedOutput()
 	case "windows":
 		cmd = exec.Command("cmd.exe", "/c", s)
