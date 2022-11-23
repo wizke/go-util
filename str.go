@@ -1,9 +1,14 @@
 package util
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"math/rand"
 	"time"
+
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"golang.org/x/text/transform"
 )
 
 // RandStringRunes 返回随机字符串
@@ -18,6 +23,7 @@ func RandStringRunes(n int) string {
 	return string(b)
 }
 
+// FormatFileSize 根据字节数返回文件大小的字符串形式
 func FormatFileSize(fileSize int64) (size string) {
 	if fileSize < 1024 {
 		//return strconv.FormatInt(fileSize, 10) + "B"
@@ -33,4 +39,117 @@ func FormatFileSize(fileSize int64) (size string) {
 	} else { //if fileSize < (1024 * 1024 * 1024 * 1024 * 1024 * 1024)
 		return fmt.Sprintf("%.2fEB", float64(fileSize)/float64(1024*1024*1024*1024*1024))
 	}
+}
+
+// CheckByteGbk 判断是否存在gbk字符
+func CheckByteGbk(data []byte) bool {
+	length := len(data)
+	var i = 0
+	for i < length {
+		if data[i] <= 0x7f {
+			//编码0~127,只有一个字节的编码，兼容ASCII码
+			i++
+			continue
+		} else {
+			//大于127的使用双字节编码，落在gbk编码范围内的字符
+			if data[i] >= 0x81 &&
+				data[i] <= 0xfe &&
+				data[i+1] >= 0x40 &&
+				data[i+1] <= 0xfe &&
+				data[i+1] != 0xf7 {
+				return !isUtf8(data)
+			} else {
+				return false
+			}
+		}
+	}
+	return false
+}
+
+func preNUm(data byte) int {
+	var mask byte = 0x80
+	var num = 0
+	//8bit中首个0bit前有多少个1bits
+	for i := 0; i < 8; i++ {
+		if (data & mask) == mask {
+			num++
+			mask = mask >> 1
+		} else {
+			break
+		}
+	}
+	return num
+}
+
+func isGBK(data []byte) bool {
+	length := len(data)
+	var i = 0
+	for i < length {
+		if data[i] <= 0x7f {
+			//编码0~127,只有一个字节的编码，兼容ASCII码
+			i++
+			continue
+		} else {
+			//大于127的使用双字节编码，落在gbk编码范围内的字符
+			if data[i] >= 0x81 &&
+				data[i] <= 0xfe &&
+				data[i+1] >= 0x40 &&
+				data[i+1] <= 0xfe &&
+				data[i+1] != 0xf7 {
+				i += 2
+				continue
+			} else {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func isUtf8(data []byte) bool {
+	i := 0
+	for i < len(data) {
+		if (data[i] & 0x80) == 0x00 {
+			// 0XXX_XXXX
+			i++
+			continue
+		} else if num := preNUm(data[i]); num > 2 {
+			// 110X_XXXX 10XX_XXXX
+			// 1110_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_0XXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_10XX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// 1111_110X 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX 10XX_XXXX
+			// preNUm() 返回首个字节的8个bits中首个0bit前面1bit的个数，该数量也是该字符所使用的字节数
+			i++
+			for j := 0; j < num-1; j++ {
+				// 判断后面的 num - 1 个字节是不是都是10开头
+				if (data[i] & 0xc0) != 0x80 {
+					return false
+				}
+				i++
+			}
+		} else {
+			//其他情况说明不是utf-8
+			return false
+		}
+	}
+	return true
+}
+
+func GbkToUtf8(s []byte) ([]byte, error) {
+	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewDecoder())
+	d, e := ioutil.ReadAll(reader)
+	if e != nil {
+		return nil, e
+	}
+	return d, nil
+}
+
+func Utf8ToGbk(s []byte) ([]byte, error) {
+	reader := transform.NewReader(bytes.NewReader(s), simplifiedchinese.GBK.NewEncoder())
+	d, e := ioutil.ReadAll(reader)
+	if e != nil {
+		return nil, e
+	}
+	return d, nil
 }
