@@ -6,10 +6,15 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"time"
+	"unsafe"
 
 	"golang.org/x/text/encoding/simplifiedchinese"
 	"golang.org/x/text/transform"
 )
+
+const letters = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+const lettersValidateCode = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789" // 去除某些字体中容易混淆的oO0lI
+const lettersNum = "0123456789"                                                         // 去除某些字体中容易混淆的oO0lI
 
 // RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
@@ -21,6 +26,68 @@ func RandStringRunes(n int) string {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
 	}
 	return string(b)
+}
+
+const (
+	// 6 bits to represent a letter index
+	letterIdBits = 6
+	// All 1-bits as many as letterIdBits
+	letterIdMask = 1<<letterIdBits - 1
+	letterIdMax  = 63 / letterIdBits
+)
+
+func RandStr(n int) string {
+	b := make([]byte, n)
+	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters!
+	src := rand.NewSource(time.Now().UnixNano())
+	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdMax
+		}
+		if idx := int(cache & letterIdMask); idx < len(letters) {
+			b[i] = letters[idx]
+			i--
+		}
+		cache >>= letterIdBits
+		remain--
+	}
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+func RandStrValidateCode(n int) string {
+	b := make([]byte, n)
+	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters!
+	src := rand.NewSource(time.Now().UnixNano())
+	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdMax
+		}
+		if idx := int(cache & letterIdMask); idx < len(lettersValidateCode) {
+			b[i] = lettersValidateCode[idx]
+			i--
+		}
+		cache >>= letterIdBits
+		remain--
+	}
+	return *(*string)(unsafe.Pointer(&b))
+}
+
+func RandStrNum(n int) string {
+	b := make([]byte, n)
+	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters!
+	src := rand.NewSource(time.Now().UnixNano())
+	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
+		if remain == 0 {
+			cache, remain = src.Int63(), letterIdMax
+		}
+		if idx := int(cache & letterIdMask); idx < len(lettersNum) {
+			b[i] = lettersNum[idx]
+			i--
+		}
+		cache >>= letterIdBits
+		remain--
+	}
+	return *(*string)(unsafe.Pointer(&b))
 }
 
 // FormatFileSize 根据字节数返回文件大小的字符串形式
