@@ -14,7 +14,7 @@ import (
 
 const letters = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const lettersValidateCode = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789" // 去除某些字体中容易混淆的oO0lI
-const lettersNum = "0123456789"                                                         // 去除某些字体中容易混淆的oO0lI
+const lettersNum = "0123456789"
 
 // RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
