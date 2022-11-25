@@ -5,7 +5,7 @@ import (
 	"net/http"
 )
 
-func ClientRemoteIp(r *http.Request) string {
+func ClientRemoteIpAll(r *http.Request) string {
 	var clientIP string
 	for k, v := range r.Header {
 		if k == "X-Real-Ip" {
@@ -17,6 +17,15 @@ func ClientRemoteIp(r *http.Request) string {
 			break
 		}
 	}
+	if clientIP != "" {
+		return clientIP
+	}
+	return r.RemoteAddr
+}
+
+func ClientRemoteIpOne(r *http.Request) string {
+	var clientIP string
+	clientIP = r.Header.Get("X-Real-Ip")
 	if clientIP != "" {
 		return clientIP
 	}
