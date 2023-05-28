@@ -220,3 +220,15 @@ func Utf8ToGbk(s []byte) ([]byte, error) {
 	}
 	return d, nil
 }
+
+func ByteListHex(byteList []byte) string {
+	str := "["
+	for i, b := range byteList {
+		str += fmt.Sprintf(" 0x%02X", b)
+		if i == len(byteList)-1 {
+			str += " "
+		}
+	}
+	str += "]"
+	return str
+}
