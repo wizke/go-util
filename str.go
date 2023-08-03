@@ -16,11 +16,14 @@ const letters = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 const lettersValidateCode = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ123456789" // 去除某些字体中容易混淆的oO0lI
 const lettersNum = "0123456789"
 
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
 // RandStringRunes 返回随机字符串
 func RandStringRunes(n int) string {
 	var letterRunes = []rune("1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 
-	rand.Seed(time.Now().UnixNano())
 	b := make([]rune, n)
 	for i := range b {
 		b[i] = letterRunes[rand.Intn(len(letterRunes))]
@@ -37,21 +40,7 @@ const (
 )
 
 func RandStr(n int) string {
-	b := make([]byte, n)
-	// A rand.Int63() generates 63 random bits, enough for letterIdMax letters!
-	src := rand.NewSource(time.Now().UnixNano())
-	for i, cache, remain := n-1, src.Int63(), letterIdMax; i >= 0; {
-		if remain == 0 {
-			cache, remain = src.Int63(), letterIdMax
-		}
-		if idx := int(cache & letterIdMask); idx < len(letters) {
-			b[i] = letters[idx]
-			i--
-		}
-		cache >>= letterIdBits
-		remain--
-	}
-	return *(*string)(unsafe.Pointer(&b))
+	return RandStringRunes(n)
 }
 
 func RandStrValidateCode(n int) string {
